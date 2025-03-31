@@ -1,0 +1,71 @@
+{
+    "system": {
+      "initialized": "System initialized successfully"
+    },
+    "welcome": "Welcome to Event Locator!",
+    "continuing": "Continuing in English...",
+    "language": {
+      "select": "Please select your preferred language:"
+    },
+    "menu": {
+      "main": "What would you like to do?",
+      "options": {
+        "register": "Register",
+        "login": "Login",
+        "create_event": "Create Event",
+        "search_events": "Search Events",
+        "view_events": "View My Events",
+        "exit": "Exit"
+      }
+    },
+    "registration": {
+      "username": "Choose a username:",
+      "email": "Enter your email:",
+      "password": "Choose a password:",
+      "categories": "Select event categories of interest:",
+      "success": "User {{username}} registered successfully!"
+    },
+    "login": {
+      "email": "Email:",
+      "password": "Password:",
+      "success": "Welcome, {{username}}!"
+    },
+    "errors": {
+      "user_not_found": "User not found",
+      "invalid_password": "Invalid password",
+      "login_required": "Please login first"
+    },
+    "search": {
+      "type": "Search by:",
+      "types": {
+        "city": "City",
+        "country": "Country",
+        "venue": "Venue"
+      },
+      "query": "Enter {{type}} to search:",
+      "radius": "Search radius (km):",
+      "filter": "Filter by categories:",
+      "no_results": "No events found",
+      "results": "Found {{count}} events:"
+    },
+    "events": {
+      "title": "Event Title:",
+      "description": "Description:",
+      "category": "Category:",
+      "country": "Country:",
+      "city": "City:",
+      "venue": "Venue:",
+      "start_time": "Start Time (YYYY-MM-DD HH:MM):",
+      "created": "Event '{{title}' created at {{venue}}, {{city}}!",
+      "none_created": "You haven't created any events",
+      "your_events": "Your {{count}} events:",
+      "details": "{{title}}\n📍 {{venue}}, {{city}}, {{country}}\n🗓 {{time}}\n🏷 {{category}}"
+    },
+    "validation": {
+      "username": "Username must be at least 3 characters",
+      "email": "Invalid email format",
+      "password": "Password must be at least 8 characters",
+      "required": "This field is required",
+      "date_format": "Invalid date format"
+    }
+  }

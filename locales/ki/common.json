@@ -1,0 +1,35 @@
+{
+    "welcome": "Murakaza neza kuri Event Locator!",
+    "continuing": "Gukomeza mu Kinyarwanda...",
+    "language": {
+      "select": "Hitamo ururimi ushaka:"
+    },
+    "menu": {
+      "main": "Urashaka gukora iki?",
+      "options": {
+        "register": "Iyandikishe",
+        "login": "Injira",
+        "create_event": "Kora ikirango",
+        "search_events": "Shakisha ibirango",
+        "view_events": "Reba ibirango byanjye",
+        "exit": "Gusohoka"
+      }
+    },
+    "login": {
+      "email": "Injiza imeri yawe:",
+      "password": "Injiza ijambo ry'ibanga:",
+      "success": "Murakaza neza, {{username}}!"
+    },
+    "search": {
+      "type": "Shakisha ku:",
+      "types": {
+        "city": "Umujyi",
+        "country": "Igihugu",
+        "venue": "Aho irango rizabera"
+      },
+      "query": "Injiza {{type}} wo gushakisha:",
+      "radius": "Uburyo bwo gushakisha (km):",
+      "filter": "Shungura ku byiciro:",
+      "results": "{{count}} ibirango byabonetse:"
+    }
+  }

@@ -10,13 +10,17 @@
     "start": "node index.js"
   },
   "dependencies": {
+    "@google-cloud/translate": "^9.0.1",
     "axios": "^1.8.4",
     "bcrypt": "^5.1.1",
     "chalk": "^4.1.2",
     "dotenv": "^16.4.7",
+    "i18next": "^24.2.3",
+    "i18next-fs-backend": "^2.6.0",
     "inquirer": "^8.2.6",
     "mongodb": "^6.15.0",
     "mongoose": "^8.13.0",
+    "node-cache": "^5.1.2",
     "pg": "^8.11.3",
     "redis": "^4.7.0"
   },

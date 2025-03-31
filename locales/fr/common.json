@@ -1,0 +1,71 @@
+{
+  "system": {
+    "initialized": "Système initialisé avec succès"
+  },
+  "welcome": "Bienvenue sur Event Locator!",
+  "continuing": "Continuer en français...",
+  "language": {
+    "select": "Veuillez sélectionner votre langue préférée:"
+  },
+  "menu": {
+    "main": "Que souhaitez-vous faire?",
+    "options": {
+      "register": "S'inscrire",
+      "login": "Se connecter",
+      "create_event": "Créer un événement",
+      "search_events": "Rechercher des événements",
+      "view_events": "Voir mes événements",
+      "exit": "Quitter"
+    }
+  },
+  "registration": {
+    "username": "Choisissez un nom d'utilisateur:",
+    "email": "Entrez votre email:",
+    "password": "Choisissez un mot de passe:",
+    "categories": "Sélectionnez les catégories d'événements qui vous intéressent:",
+    "success": "Utilisateur {{username}} enregistré avec succès!"
+  },
+  "login": {
+    "email": "Email:",
+    "password": "Mot de passe:",
+    "success": "Bienvenue, {{username}}!"
+  },
+  "errors": {
+    "user_not_found": "Utilisateur non trouvé",
+    "invalid_password": "Mot de passe incorrect",
+    "login_required": "Veuillez vous connecter d'abord"
+  },
+  "search": {
+    "type": "Rechercher par:",
+    "types": {
+      "city": "Ville",
+      "country": "Pays",
+      "venue": "Lieu"
+    },
+    "query": "Entrez {{type}} à rechercher:",
+    "radius": "Rayon de recherche (km):",
+    "filter": "Filtrer par catégories:",
+    "no_results": "Aucun événement trouvé",
+    "results": "{{count}} événements trouvés:"
+  },
+  "events": {
+    "title": "Titre de l'événement:",
+    "description": "Description:",
+    "category": "Catégorie:",
+    "country": "Pays:",
+    "city": "Ville:",
+    "venue": "Lieu:",
+    "start_time": "Heure de début (AAAA-MM-JJ HH:MM):",
+    "created": "Événement '{{title}}' créé à {{venue}}, {{city}}!",
+    "none_created": "Vous n'avez créé aucun événement",
+    "your_events": "Vos {{count}} événements:",
+    "details": "{{title}}\n📍 {{venue}}, {{city}}, {{country}}\n🗓 {{time}}\n🏷 {{category}}"
+  },
+  "validation": {
+    "username": "Le nom d'utilisateur doit contenir au moins 3 caractères",
+    "email": "Format d'email invalide",
+    "password": "Le mot de passe doit contenir au moins 8 caractères",
+    "required": "Ce champ est obligatoire",
+    "date_format": "Format de date invalide"
+  }
+}
