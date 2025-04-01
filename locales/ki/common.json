@@ -1,35 +1,123 @@
 {
-    "welcome": "Murakaza neza kuri Event Locator!",
-    "continuing": "Gukomeza mu Kinyarwanda...",
-    "language": {
-      "select": "Hitamo ururimi ushaka:"
-    },
-    "menu": {
-      "main": "Urashaka gukora iki?",
-      "options": {
-        "register": "Iyandikishe",
-        "login": "Injira",
-        "create_event": "Kora ikirango",
-        "search_events": "Shakisha ibirango",
-        "view_events": "Reba ibirango byanjye",
-        "exit": "Gusohoka"
-      }
-    },
-    "login": {
-      "email": "Injiza imeri yawe:",
-      "password": "Injiza ijambo ry'ibanga:",
-      "success": "Murakaza neza, {{username}}!"
-    },
-    "search": {
-      "type": "Shakisha ku:",
-      "types": {
-        "city": "Umujyi",
-        "country": "Igihugu",
-        "venue": "Aho irango rizabera"
-      },
-      "query": "Injiza {{type}} wo gushakisha:",
-      "radius": "Uburyo bwo gushakisha (km):",
-      "filter": "Shungura ku byiciro:",
-      "results": "{{count}} ibirango byabonetse:"
+  "system": {
+    "initialized": "Sisitemu yatangiye neza"
+  },
+  "welcome": "Murakaza neza kuri Event Locator!",
+  "continuing": "Gukomeza mu Kinyarwanda...",
+  "language": {
+    "select": "Hitamo ururimi ushaka:"
+  },
+  "menu": {
+    "main": "Urashaka gukora iki?",
+    "options": {
+      "register": "Iyandikishe",
+      "login": "Injira",
+      "create_event": "Kora ikirango",
+      "update_event": "Hindura ikirango",
+      "delete_event": "Siba ikirango",
+      "view_event_details": "Reba ibisobanuro by'ikirango",
+      "search_events": "Shakisha ibirango",
+      "view_events": "Reba ibirango byanjye",
+      "exit": "Gusohoka"
     }
+  },
+  "registration": {
+    "username": "Hitamo izina ry'ukoresha:",
+    "email": "Injiza imeri yawe:",
+    "password": "Hitamo ijambo ry'ibanga:",
+    "categories": "Hitamo ibyiciro by'ibirango ushaka:",
+    "success": "Ukoresha {{username}} yanditswe neza!"
+  },
+  "login": {
+    "email": "Imeri:",
+    "password": "Ijambo ry'ibanga:",
+    "success": "Murakaza neza, {{username}}!"
+  },
+  "errors": {
+    "user_not_found": "Ntabwo umukoresha abonetse",
+    "invalid_password": "Ijambo ry'ibanga ntibikwiriye",
+    "login_required": "Mbanze winjire",
+    "duplicate_user": "Ukoresha cyangwa imeri yaranditswe mbere",
+    "registration_failed": "Kwandikisha ntibyakunze",
+    "login_failed": "Kwinjira ntibyakunze",
+    "event_creation_failed": "Gukora ikirango ntibyakunze",
+    "event_update_failed": "Guhindura ikirango ntibyakunze",
+    "event_delete_failed": "Gusiba ikirango ntibyakunze",
+    "event_not_found": "Ikirango ntibyabonetse",
+    "not_authorized": "Ntugifite uburenganzira",
+    "geocode_failed": "Kubona ahantu {{location}} ntibyakunze",
+    "search_failed": "Gushakisha ntibyakunze",
+    "view_events_failed": "Kureba ibirango ntibyakunze",
+    "initialization": "Kutangira sisitemu ntibyakunze",
+    "city_not_listed": "Umujyi ntawubonetse"
+  },
+  "search": {
+    "type": "Shakisha ku:",
+    "types": {
+      "city": "Umujyi",
+      "country": "Igihugu",
+      "venue": "Aho irango rizabera"
+    },
+    "query": "Injiza {{type}} wo gushakisha:",
+    "radius": "Uburyo bwo gushakisha (km):",
+    "filter": "Shungura ku byiciro:",
+    "no_results": "Nta birango byabonetse",
+    "results": "{{count}} ibirango byabonetse:"
+  },
+  "events": {
+    "title": "Umutwe w'ikirango:",
+    "description": "Ibisobanuro:",
+    "category": "Icyiciro:",
+    "country": "Igihugu:",
+    "city": "Umujyi:",
+    "venue": "Aho irango rizabera:",
+    "start_time": "Igihe cyo gutangira (YYYY-MM-DD HH:MM):",
+    "created": "Ikirango '{{title}}' cyakozwe kuri {{venue}}, {{city}}!",
+    "none_created": "Ntacyo wakoze",
+    "none_available": "Nta birango biraboneka",
+    "your_events": "Ibirango {{count}} byawe:",
+    "details": "{{title}}\n📍 {{venue}}, {{city}}, {{country}}\n🗓 {{time}}\n🏷 {{category}}",
+    "select_to_update": "Hitamo ikirango ushaka guhindura:",
+    "select_to_delete": "Hitamo ikirango ushaka gusiba:",
+    "select_to_view": "Hitamo ikirango ushaka kureba:",
+    "fields_to_update": "Ni iki ushaka guhindura?",
+    "no_fields_selected": "Nta cyahiswemo",
+    "new_title": "Umutwe mushya:",
+    "new_description": "Ibisobanuro bishya:",
+    "new_category": "Icyiciro gishya:",
+    "new_country": "Igihugu gishya:",
+    "new_city": "Umujyi mushya:",
+    "new_venue": "Aho mushya:",
+    "new_start_time": "Igihe gishya cyo gutangira:",
+    "confirm_delete": "Urabyizeye ko ushaka gusiba iki kirango?",
+    "delete_cancelled": "Gusiba byahagaritswe",
+    "deleted": "Ikirango cyasibwe neza",
+    "updated": "Ikirango '{{title}}' cyahinduwe neza",
+    "creator_options": "Amahitamo y'umukoresha:",
+    "detail_view": {
+      "title": "Ibisobanuro by'ikirango: {{title}}",
+      "description": "Ibisobanuro:",
+      "category": "Icyiciro:",
+      "location": "Aho irango rizabera:",
+      "coordinates": "Imimerere:",
+      "start_time": "Igihe cyo gutangira:",
+      "created": "Cyakozwe ku:",
+      "updated": "Cyahinduwe ku:",
+      "map_link": "Ihuza rya karte:"
+    },
+    "enhancing_locations": "Kunoza ibisobanuro by'aho {{count}} ibirango biri...",
+    "enhanced_locations": "Ibisobanuro by'aho {{count}} ibirango byunzwe"
+  },
+  "validation": {
+    "username": "Izina ry'ukoresha rigomba kuba rirenze inyuguti 3",
+    "email": "Imeri ntibikwiriye",
+    "password": "Ijambo ry'ibanga rigomba kuba rirenze inyuguti 8",
+    "required": "Iki gisubizo ari ngombwa",
+    "date_format": "Igihe ntibikwiriye"
+  },
+  "common": {
+    "cancel": "Kureka",
+    "back": "Subira inyuma",
+    "not_provided": "Ntacyo cyatanzwe"
   }
+}

@@ -13,6 +13,9 @@
         "register": "Register",
         "login": "Login",
         "create_event": "Create Event",
+        "update_event": "Update Event",
+        "delete_event": "Delete Event",
+        "view_event_details": "View Event Details",
         "search_events": "Search Events",
         "view_events": "View My Events",
         "exit": "Exit"

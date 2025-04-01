@@ -7,6 +7,7 @@ const Redis = require('redis');
 const axios = require('axios');
 const NodeCache = require('node-cache');
 const initI18n = require('../config/i18n');
+const EventCRUD = require('./EventCRUD');
 
 // Initialize cache with 24 hour TTL
 const geoDataCache = new NodeCache({ stdTTL: 86400 });
@@ -30,6 +31,8 @@ class EventLocatorApp {
         reconnectStrategy: (retries) => Math.min(retries * 100, 5000)
       }
     });
+
+    this.eventCRUD = new EventCRUD(this);
   }
 
   async initialize() {
@@ -57,13 +60,12 @@ class EventLocatorApp {
       console.log(chalk.green(this.t('system.initialized')));
     } catch (error) {
       console.error(chalk.red(this.t('errors.initialization')), error);
-      this.loadDummyData(); // Fallback to dummy data
+      this.loadDummyData();
     }
   }
 
   async loadCountriesAndCities() {
     try {
-      // Try to get from cache first
       const cachedData = geoDataCache.get('eastAfricaGeoData');
       if (cachedData) {
         this.countries = cachedData.countries;
@@ -71,20 +73,16 @@ class EventLocatorApp {
         return;
       }
 
-      // Try CountriesNow API first
       await this.fetchFromCountriesNowAPI();
 
-      // If no data, try Geonames as fallback
       if (this.countries.length === 0) {
         await this.fetchFromGeonamesAPI();
       }
 
-      // Final fallback to dummy data if APIs fail
       if (this.countries.length === 0) {
         this.loadDummyData();
       }
 
-      // Cache the results
       geoDataCache.set('eastAfricaGeoData', {
         countries: this.countries,
         citiesByCountry: this.citiesByCountry
@@ -106,17 +104,15 @@ class EventLocatorApp {
         'Burundi', 'Democratic Republic of the Congo'
       ];
       
-      // Filter and sort countries
       this.countries = eastAfricanCountries
         .filter(country => allCountries.some(c => c.country === country))
         .sort();
 
-      // Get cities for each country
       await Promise.all(this.countries.map(async country => {
         const countryData = allCountries.find(c => c.country === country);
         if (countryData && countryData.cities) {
           this.citiesByCountry[country] = countryData.cities
-            .filter(city => city && city.trim() !== '') // Remove empty entries
+            .filter(city => city && city.trim() !== '')
             .sort();
         } else {
           this.citiesByCountry[country] = this.getDummyCitiesForCountry(country);
@@ -136,7 +132,6 @@ class EventLocatorApp {
         console.log(chalk.yellow('Using Geonames demo account with limited requests'));
       }
 
-      // East African country codes
       const eastAfricanCountries = [
         { name: 'Rwanda', code: 'RW' },
         { name: 'Kenya', code: 'KE' },
@@ -148,7 +143,6 @@ class EventLocatorApp {
 
       this.countries = eastAfricanCountries.map(c => c.name).sort();
 
-      // Fetch cities for each country
       await Promise.all(eastAfricanCountries.map(async ({ name, code }) => {
         try {
           const response = await axios.get(
@@ -157,7 +151,7 @@ class EventLocatorApp {
           
           this.citiesByCountry[name] = response.data.geonames
             ?.map(city => city.name)
-            .filter(city => city) // Remove empty entries
+            .filter(city => city)
             .sort() || this.getDummyCitiesForCountry(name);
         } catch (error) {
           console.error(chalk.yellow(`Failed to fetch cities for ${name}:`), error.message);
@@ -226,48 +220,60 @@ class EventLocatorApp {
 
   async mainMenu() {
     const menuChoices = {
-      register: this.t('menu.options.register'),
-      login: this.t('menu.options.login'),
-      create_event: this.t('menu.options.create_event'),
-      search_events: this.t('menu.options.search_events'),
-      view_events: this.t('menu.options.view_events'),
-      exit: this.t('menu.options.exit')
+        register: this.t('menu.options.register'),
+        login: this.t('menu.options.login'),
+        create_event: this.t('menu.options.create_event'),
+        search_events: this.t('menu.options.search_events'),
+        view_events: this.t('menu.options.view_events'),
+        update_event: this.t('menu.options.update_event'),
+        delete_event: this.t('menu.options.delete_event'),
+        view_event_details: this.t('menu.options.view_event_details'),
+        exit: this.t('menu.options.exit')
     };
 
     while (true) {
-      const { action } = await inquirer.prompt({
-        type: 'list',
-        name: 'action',
-        message: this.t('menu.main'),
-        choices: Object.values(menuChoices)
-      });
+        const { action } = await inquirer.prompt({
+            type: 'list',
+            name: 'action',
+            message: this.t('menu.main'),
+            choices: Object.values(menuChoices)
+        });
 
-      const selectedAction = Object.keys(menuChoices).find(
-        key => menuChoices[key] === action
-      );
+        const selectedAction = Object.keys(menuChoices).find(
+            key => menuChoices[key] === action
+        );
 
-      switch (selectedAction) {
-        case 'register':
-          await this.registerUser();
-          break;
-        case 'login':
-          await this.loginUser();
-          break;
-        case 'create_event':
-          await this.createEvent();
-          break;
-        case 'search_events':
-          await this.searchEvents();
-          break;
-        case 'view_events':
-          await this.viewMyEvents();
-          break;
-        case 'exit':
-          await this.close();
-          process.exit(0);
-      }
+        switch (selectedAction) {
+            case 'register':
+                await this.registerUser();
+                break;
+            case 'login':
+                await this.loginUser();
+                break;
+            case 'create_event':
+                await this.createEvent();
+                break;
+            case 'search_events':
+                await this.searchEvents();
+                break;
+            case 'view_events':
+                await this.viewMyEvents();
+                break;
+            case 'update_event':
+                await this.updateEvent();
+                break;
+            case 'delete_event':
+                await this.deleteEvent();
+                break;
+            case 'view_event_details':
+                await this.viewEventDetails();
+                break;
+            case 'exit':
+                await this.close();
+                process.exit(0);
+        }
     }
-  }
+}
 
   async registerUser() {
     const userData = await inquirer.prompt([
@@ -568,6 +574,93 @@ class EventLocatorApp {
     } catch (error) {
       console.error(chalk.red(this.t('errors.view_events_failed')), error.message);
     }
+  }
+
+  async updateEvent() {
+    return this.eventCRUD.updateEvent();
+  }
+
+  async deleteEvent() {
+    return this.eventCRUD.deleteEvent();
+  }
+
+  async viewEventDetails() {
+    return this.eventCRUD.viewEventDetails();
+  }
+
+  async updateEventById(eventId) {
+    return this.eventCRUD.updateEventById(eventId);
+  }
+
+  async deleteEventById(eventId) {
+    return this.eventCRUD.deleteEventById(eventId);
+  }
+
+  async enhanceLocationData() {
+    try {
+      const eventsToEnhance = await this.eventsCollection.find({
+        "enhancedLocation": { $exists: false }
+      }).toArray();
+      
+      if (eventsToEnhance.length === 0) {
+        return;
+      }
+      
+      console.log(chalk.yellow(this.t('events.enhancing_locations', { count: eventsToEnhance.length })));
+      
+      let enhancedCount = 0;
+      for (const event of eventsToEnhance) {
+        try {
+          const lat = event.location.coordinates[1];
+          const lon = event.location.coordinates[0];
+          const response = await axios.get(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`,
+            { headers: { 'User-Agent': 'EventLocatorApp/1.0' } }
+          );
+          
+          if (response.data && response.data.address) {
+            const address = response.data.address;
+            
+            const enhancedLocation = {
+              formattedAddress: response.data.display_name,
+              street: address.road || address.street || null,
+              houseNumber: address.house_number || null,
+              suburb: address.suburb || null,
+              city: address.city || address.town || address.village || event.city,
+              county: address.county || null,
+              state: address.state || null,
+              country: address.country || event.country,
+              postcode: address.postcode || null,
+              raw: response.data
+            };
+            
+            await this.eventsCollection.updateOne(
+              { _id: event._id },
+              { 
+                $set: { 
+                  enhancedLocation: enhancedLocation,
+                  locationUpdatedAt: new Date()
+                } 
+              }
+            );
+            
+            enhancedCount++;
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        } catch (error) {
+          console.error(chalk.red(this.t('errors.enhance_location_failed', { title: event.title })), error.message);
+        }
+      }
+      
+      console.log(chalk.green(this.t('events.enhanced_locations', { count: enhancedCount })));
+    } catch (error) {
+      console.error(chalk.red(this.t('errors.location_enhancement_failed')), error.message);
+    }
+  }
+
+  async initializeBackgroundTasks() {
+    this.enhanceLocationData();
+    setInterval(() => this.enhanceLocationData(), 60 * 60 * 1000);
   }
 
   async close() {
