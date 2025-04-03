@@ -1,9 +1,7 @@
 # Event Locator CLI
-![demo video](https://somup.com/cTferdsoPE) 
-![follow the project documentation:](https://docs.google.com/document/d/1HSgtptW4jJejT6d0w088pp0r_d7X7rnv0eETFJMNpYI/edit?usp=sharing)
 
-
-![Event Locator CLI](https://via.placeholder.com/800x200?text=Event+Locator+CLI+Application)
+[![Event Locator Demo](https://img.shields.io/badge/DEMO-Watch%20Video-blue?style=for-the-badge&logo=appveyor)](https://go.screenpal.com/watch/cTfe31ni91i)
+[![Documentation](https://img.shields.io/badge/DOCS-Read%20Documentation-green?style=for-the-badge&logo=appveyor)](https://docs.google.com/document/d/1HSgtptW4jJejT6d0w088pp0r_d7X7rnv0eETFJMNpYI/edit?usp=sharing)
 
 A command-line application for creating, managing, and finding events with multi-language support.
 
