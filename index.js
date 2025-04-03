@@ -16,9 +16,9 @@ async function run() {
     await app.mainMenu();
   } catch (error) {
     console.error(chalk.red('Fatal error:'), error);
+    process.exit(1);
   } finally {
     await app.close();
   }
 }
-
-run();
+run().catch(console.error);

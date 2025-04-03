@@ -1,5 +1,6 @@
 const chalk = require('chalk');
 const inquirer = require('inquirer');
+const { MongoClient, ObjectId } = require('mongodb');
 
 class EventCRUD {
   constructor(app) {
@@ -43,128 +44,110 @@ class EventCRUD {
   }
 
   async deleteEvent() {
-    if (!this.app.currentUser) {
-      console.log(chalk.red(this.app.t('errors.login_required')));
-      return;
-    }
-
     try {
-      // First, get the user's events
-      const events = await this.app.eventsCollection.find({ 
-        creatorId: this.app.currentUser._id 
+      if (!this.app.currentUser) {
+        console.log(chalk.red(this.app.t('errors.login_required')));
+        return;
+      }
+  
+      // Get user's events
+      const events = await this.app.eventsCollection.find({
+        creatorId: this.app.currentUser._id
       }).sort({ startTime: 1 }).toArray();
-
+  
       if (events.length === 0) {
         console.log(chalk.yellow(this.app.t('events.none_created')));
         return;
       }
-
-      // Add a cancel option
-      const eventChoices = events.map(event => ({
-        name: `${event.title} - ${event.venue}, ${event.city} (${event.startTime.toLocaleString()})`,
-        value: event._id.toString()
-      }));
-      eventChoices.push({ 
-        name: this.app.t('common.cancel'), 
-        value: 'cancel' 
-      });
-
-      // Let the user select which event to delete
-      const { eventToDelete } = await inquirer.prompt({
+  
+      // Display events for selection
+      const { selectedEvent } = await inquirer.prompt({
         type: 'list',
-        name: 'eventToDelete',
+        name: 'selectedEvent',
         message: this.app.t('events.select_to_delete'),
-        choices: eventChoices
+        choices: events.map(event => ({
+          name: `${event.title} - ${event.venue}, ${event.city} (${event.startTime.toLocaleString()})`,
+          value: event._id.toString() // Convert ObjectId to string for selection
+        }))
       });
-
-      if (eventToDelete === 'cancel') {
+  
+      // Confirm deletion
+      const { confirm } = await inquirer.prompt({
+        type: 'confirm',
+        name: 'confirm',
+        message: this.app.t('events.confirm_delete'),
+        default: false
+      });
+  
+      if (!confirm) {
         console.log(chalk.yellow(this.app.t('events.delete_cancelled')));
         return;
       }
-
-      await this.deleteEventById(this.app.db.ObjectId.createFromHexString(eventToDelete));
+  
+      // Convert string back to ObjectId for query
+      const result = await this.app.eventsCollection.deleteOne({
+        _id: new ObjectId(selectedEvent),
+        creatorId: this.app.currentUser._id
+      });
+  
+      if (result.deletedCount === 1) {
+        console.log(chalk.green(this.app.t('events.deleted')));
+      } else {
+        console.log(chalk.red(this.app.t('errors.event_not_found')));
+      }
     } catch (error) {
       console.error(chalk.red(this.app.t('errors.event_delete_failed')), error.message);
+      throw error;
     }
   }
-
   async viewEventDetails() {
-    if (!this.app.currentUser) {
-      console.log(chalk.red(this.app.t('errors.login_required')));
-      return;
-    }
-
     try {
-      // First, get all events
-      const events = await this.app.eventsCollection.find({}).sort({ startTime: 1 }).toArray();
-
-      if (events.length === 0) {
-        console.log(chalk.yellow(this.app.t('events.none_available')));
+      if (!this.app.currentUser) {
+        console.log(chalk.red(this.app.t('errors.login_required')));
         return;
       }
-
-      // Let the user select which event to view
-      const { eventToView } = await inquirer.prompt({
+  
+      const events = await this.app.eventsCollection.find({
+        creatorId: this.app.currentUser._id
+      }).sort({ startTime: 1 }).toArray();
+  
+      if (events.length === 0) {
+        console.log(chalk.yellow(this.app.t('events.none_created')));
+        return;
+      }
+  
+      const { selectedEvent } = await inquirer.prompt({
         type: 'list',
-        name: 'eventToView',
+        name: 'selectedEvent',
         message: this.app.t('events.select_to_view'),
         choices: events.map(event => ({
           name: `${event.title} - ${event.venue}, ${event.city} (${event.startTime.toLocaleString()})`,
           value: event._id.toString()
         }))
       });
-
-      // Get the selected event
-      const selectedEvent = await this.app.eventsCollection.findOne({ 
-        _id: this.app.db.ObjectId.createFromHexString(eventToView) 
+  
+      const event = await this.app.eventsCollection.findOne({
+        _id: new ObjectId(selectedEvent),
+        creatorId: this.app.currentUser._id
       });
-
-      if (!selectedEvent) {
+  
+      if (!event) {
         console.log(chalk.red(this.app.t('errors.event_not_found')));
         return;
       }
-
+  
       // Display event details
-      console.log(chalk.cyan('===================='));
-      console.log(chalk.green(this.app.t('events.detail_view.title', { title: selectedEvent.title })));
-      console.log(chalk.cyan('===================='));
-      console.log(chalk.yellow(this.app.t('events.detail_view.description')), selectedEvent.description || this.app.t('common.not_provided'));
-      console.log(chalk.yellow(this.app.t('events.detail_view.category')), selectedEvent.category.charAt(0).toUpperCase() + selectedEvent.category.slice(1));
-      console.log(chalk.yellow(this.app.t('events.detail_view.location')), `${selectedEvent.venue}, ${selectedEvent.city}, ${selectedEvent.country}`);
-      console.log(chalk.yellow(this.app.t('events.detail_view.coordinates')), `${selectedEvent.location.coordinates[1]}, ${selectedEvent.location.coordinates[0]}`);
-      console.log(chalk.yellow(this.app.t('events.detail_view.start_time')), selectedEvent.startTime.toLocaleString());
-      console.log(chalk.yellow(this.app.t('events.detail_view.created')), selectedEvent.createdAt.toLocaleString());
-      
-      if (selectedEvent.updatedAt) {
-        console.log(chalk.yellow(this.app.t('events.detail_view.updated')), selectedEvent.updatedAt.toLocaleString());
-      }
-      
-      // Display a map link
-      const mapUrl = `https://www.openstreetmap.org/?mlat=${selectedEvent.location.coordinates[1]}&mlon=${selectedEvent.location.coordinates[0]}&zoom=15`;
-      console.log(chalk.yellow(this.app.t('events.detail_view.map_link')), mapUrl);
-      console.log(chalk.cyan('===================='));
-
-      // If the user is the creator, offer update or delete options
-      if (selectedEvent.creatorId.toString() === this.app.currentUser._id.toString()) {
-        const { action } = await inquirer.prompt({
-          type: 'list',
-          name: 'action',
-          message: this.app.t('events.creator_options'),
-          choices: [
-            { name: this.app.t('events.update'), value: 'update' },
-            { name: this.app.t('events.delete'), value: 'delete' },
-            { name: this.app.t('common.back'), value: 'back' }
-          ]
-        });
-
-        if (action === 'update') {
-          await this.updateEventById(selectedEvent._id);
-        } else if (action === 'delete') {
-          await this.deleteEventById(selectedEvent._id);
-        }
-      }
+      console.log(chalk.blue.bold('\nEvent Details:'));
+      console.log(chalk.white(`Title: ${event.title}`));
+      console.log(chalk.white(`Description: ${event.description || 'N/A'}`));
+      console.log(chalk.white(`Venue: ${event.venue}`));
+      console.log(chalk.white(`Location: ${event.city}, ${event.country}`));
+      console.log(chalk.white(`Date: ${event.startTime.toLocaleString()}`));
+      console.log(chalk.white(`Category: ${event.category}`));
+      console.log(chalk.white(`Created: ${event.createdAt.toLocaleString()}`));
     } catch (error) {
       console.error(chalk.red(this.app.t('errors.event_view_failed')), error.message);
+      throw error;
     }
   }
 

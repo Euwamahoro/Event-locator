@@ -70,5 +70,9 @@
       "password": "Password must be at least 8 characters",
       "required": "This field is required",
       "date_format": "Invalid date format"
+    },
+    "notifications": {
+      "due_events": "You have upcoming events due soon",
+      "overdue_events": "You have events that are now past due"
     }
   }

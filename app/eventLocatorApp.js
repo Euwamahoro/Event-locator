@@ -8,6 +8,7 @@ const axios = require('axios');
 const NodeCache = require('node-cache');
 const initI18n = require('../config/i18n');
 const EventCRUD = require('./EventCRUD');
+const { Table } = require('console-table-printer');
 
 // Initialize cache with 24 hour TTL
 const geoDataCache = new NodeCache({ stdTTL: 86400 });
@@ -218,62 +219,120 @@ class EventLocatorApp {
     await this.showWelcomeMessage();
   }
 
-  async mainMenu() {
-    const menuChoices = {
-        register: this.t('menu.options.register'),
-        login: this.t('menu.options.login'),
-        create_event: this.t('menu.options.create_event'),
-        search_events: this.t('menu.options.search_events'),
-        view_events: this.t('menu.options.view_events'),
-        update_event: this.t('menu.options.update_event'),
-        delete_event: this.t('menu.options.delete_event'),
-        view_event_details: this.t('menu.options.view_event_details'),
-        exit: this.t('menu.options.exit')
-    };
+  getEventStatus(event) {
+    const now = new Date();
+    const eventDate = new Date(event.startTime);
+    const oneDayBefore = new Date(eventDate);
+    oneDayBefore.setDate(oneDayBefore.getDate() - 1);
 
-    while (true) {
-        const { action } = await inquirer.prompt({
-            type: 'list',
-            name: 'action',
-            message: this.t('menu.main'),
-            choices: Object.values(menuChoices)
-        });
-
-        const selectedAction = Object.keys(menuChoices).find(
-            key => menuChoices[key] === action
-        );
-
-        switch (selectedAction) {
-            case 'register':
-                await this.registerUser();
-                break;
-            case 'login':
-                await this.loginUser();
-                break;
-            case 'create_event':
-                await this.createEvent();
-                break;
-            case 'search_events':
-                await this.searchEvents();
-                break;
-            case 'view_events':
-                await this.viewMyEvents();
-                break;
-            case 'update_event':
-                await this.updateEvent();
-                break;
-            case 'delete_event':
-                await this.deleteEvent();
-                break;
-            case 'view_event_details':
-                await this.viewEventDetails();
-                break;
-            case 'exit':
-                await this.close();
-                process.exit(0);
-        }
+    if (now > eventDate) {
+      return { status: 'Overdue', color: 'red' };
+    } else if (now >= oneDayBefore && now <= eventDate) {
+      return { status: 'Due', color: 'yellow' };
+    } else {
+      return { status: 'Pending', color: 'green' };
     }
-}
+  }
+
+  async displayEventsTable(events, title = 'Events') {
+    try {
+      if (!events || events.length === 0) {
+        console.log(chalk.yellow(this.t('events.no_events_found', { defaultValue: 'No events found' })));
+        return;
+      }
+  
+      const table = new Table({
+        title: chalk.blue.bold(title),
+        columns: [
+          { name: 'index', alignment: 'left', title: '#' },
+          { name: 'title', alignment: 'left', title: this.t('events.table.title', { defaultValue: 'Title' }) },
+          { name: 'venue', alignment: 'left', title: this.t('events.table.venue', { defaultValue: 'Venue' }) },
+          { name: 'city', alignment: 'left', title: this.t('events.table.city', { defaultValue: 'City' }) },
+          { name: 'date', alignment: 'left', title: this.t('events.table.date', { defaultValue: 'Date' }) },
+          { name: 'status', alignment: 'left', title: this.t('events.table.status', { defaultValue: 'Status' }) },
+          { name: 'category', alignment: 'left', title: this.t('events.table.category', { defaultValue: 'Category' }) }
+        ],
+        sort: (row1, row2) => new Date(row1.date) - new Date(row2.date)
+      });
+  
+      events.forEach((event, index) => {
+        const status = this.getEventStatus(event);
+        try {
+          table.addRow({
+            index: index + 1,
+            title: event.title || 'N/A',
+            venue: event.venue || 'N/A',
+            city: event.city || 'N/A',
+            date: event.startTime ? event.startTime.toLocaleString() : 'N/A',
+            status: status.status,
+            category: event.category ? event.category.charAt(0).toUpperCase() + event.category.slice(1) : 'N/A'
+          }, { color: status.color });
+        } catch (rowError) {
+          console.error(chalk.red(`Error adding event #${index + 1} to table`), rowError.message);
+        }
+      });
+  
+      table.printTable();
+    } catch (error) {
+      console.error(chalk.red('Error displaying events table:'), error.message);
+      // Log the basic event data as a fallback
+      console.log(chalk.yellow('Events (fallback display):'));
+      events.forEach((event, index) => {
+        console.log(`${index + 1}. ${event.title || 'N/A'} - ${event.venue || 'N/A'} (${event.startTime ? event.startTime.toLocaleString() : 'N/A'})`);
+      });
+    }
+  };
+
+  async checkDueEvents() {
+    if (!this.currentUser) return;
+  
+    try {
+      const now = new Date();
+      const upcomingEvents = await this.eventsCollection.find({
+        creatorId: this.currentUser._id,
+        startTime: { $gte: now }
+      }).sort({ startTime: 1 }).toArray();
+  
+      const dueEvents = upcomingEvents.filter(event => {
+        const eventDate = new Date(event.startTime);
+        const oneDayBefore = new Date(eventDate);
+        oneDayBefore.setDate(oneDayBefore.getDate() - 1);
+        return now >= oneDayBefore;
+      });
+  
+      if (dueEvents.length > 0) {
+        // Use a default message if translation is missing
+        const dueMessage = this.t('notifications.due_events', { defaultValue: 'You have upcoming events due soon' });
+        console.log(chalk.yellow.bold('\n⚠️ ' + dueMessage));
+        
+        try {
+          this.displayEventsTable(dueEvents, 'Your Due Events');
+        } catch (displayError) {
+          console.error(chalk.red('Error displaying due events table:'), displayError.message);
+        }
+      }
+  
+      const overdueEvents = await this.eventsCollection.find({
+        creatorId: this.currentUser._id,
+        startTime: { $lt: now }
+      }).sort({ startTime: 1 }).toArray();
+  
+      if (overdueEvents.length > 0) {
+        // Use a default message if translation is missing
+        const overdueMessage = this.t('notifications.overdue_events', { defaultValue: 'You have events that are now past due' });
+        console.log(chalk.red.bold('\n⚠️ ' + overdueMessage));
+        
+        try {
+          this.displayEventsTable(overdueEvents, 'Your Overdue Events');
+        } catch (displayError) {
+          console.error(chalk.red('Error displaying overdue events table:'), displayError.message);
+        }
+      }
+    } catch (error) {
+      console.error(chalk.red('Failed to check for due events:'), error.message);
+      // Swallow the error to prevent it from crashing the app
+    }
+  }
 
   async registerUser() {
     const userData = await inquirer.prompt([
@@ -352,14 +411,15 @@ class EventLocatorApp {
         this.currentUser = user;
         this.preferredLanguage = user.preferredLanguage;
         console.log(chalk.green(this.t('login.success', { username: user.username })));
+        await this.checkDueEvents();
       } else {
         console.log(chalk.red(this.t('errors.invalid_password')));
       }
     } catch (error) {
       console.error(chalk.red(this.t('errors.login_failed')), error.message);
+      throw error; // Re-throw to be caught by mainMenu's try-catch
     }
-  }
-
+};
   async createEvent() {
     if (!this.currentUser) {
       console.log(chalk.red(this.t('errors.login_required')));
@@ -447,16 +507,58 @@ class EventLocatorApp {
     }
   }
 
+  async getLocalCoordinates(locationName) {
+    const localCoordinates = {
+      'kigali': [30.0619, -1.9441],
+      'nairobi': [36.8219, -1.2921],
+      'kampala': [32.5825, 0.3136],
+      'dar es salaam': [39.2083, -6.7924],
+      'bujumbura': [29.3599, -3.3822],
+      'goma': [29.2284, -1.6792],
+      'butare': [29.7439, -2.5967],
+      'gitarama': [29.7566, -2.0744],
+      'ruhengeri': [29.6344, -1.4998],
+      'musanze': [29.6344, -1.4998],
+      'gisenyi': [29.2564, -1.7028],
+      'kibuye': [29.3478, -2.0606],
+      'mombasa': [39.6682, -4.0435],
+      'kisumu': [34.7617, -0.0917],
+      'nakuru': [36.0665, -0.3031],
+      'eldoret': [35.2699, 0.5143],
+      'entebbe': [32.4637, 0.0512],
+      'jinja': [33.2062, 0.4244],
+      'mbale': [34.1754, 1.0644],
+      'gulu': [32.2999, 2.7746],
+      'dodoma': [35.7418, -6.1629],
+      'arusha': [36.6830, -3.3869],
+      'mwanza': [32.8987, -2.5167],
+      'zanzibar': [39.2083, -6.1659]
+    };
+
+    const normalizedLocation = locationName.toLowerCase().trim();
+    return localCoordinates[normalizedLocation] || [30.0619, -1.9441];
+  }
+
   async geocodeLocation(location) {
     try {
-      const response = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`);
+      const localCoords = await this.getLocalCoordinates(location);
+      if (localCoords) {
+        return localCoords;
+      }
+
+      const response = await axios.get(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`,
+        { headers: { 'User-Agent': 'EventLocatorApp/1.0' } }
+      );
+      
       if (response.data && response.data.length > 0) {
         return [parseFloat(response.data[0].lon), parseFloat(response.data[0].lat)];
       }
-      throw new Error('Location not found');
+      
+      return [30.0619, -1.9441];
     } catch (error) {
-      console.error(chalk.yellow(this.t('errors.geocode_failed', { location })));
-      return [30.0619, -1.9441]; // Default to Kigali coordinates
+      console.error(chalk.yellow(this.t('errors.geocode_fallback')));
+      return [30.0619, -1.9441];
     }
   }
 
@@ -504,7 +606,7 @@ class EventLocatorApp {
       }
 
       if (searchCriteria.radius > 0) {
-        const coordinates = await this.geocodeLocation(searchCriteria.query);
+        const coordinates = await this.getLocalCoordinates(searchCriteria.query);
         query.location = {
           $near: {
             $geometry: { type: 'Point', coordinates },
@@ -524,19 +626,10 @@ class EventLocatorApp {
         return;
       }
 
-      console.log(chalk.green(this.t('search.results', { count: events.length })));
-      events.forEach(event => {
-        console.log(chalk.cyan(
-          this.t('events.details', {
-            title: event.title,
-            venue: event.venue,
-            city: event.city,
-            country: event.country,
-            time: event.startTime.toLocaleString(),
-            category: event.category.charAt(0).toUpperCase() + event.category.slice(1)
-          })
-        ));
-      });
+      this.displayEventsTable(events, this.t('search.results_title', { 
+        count: events.length,
+        query: searchCriteria.query
+      }));
     } catch (error) {
       console.error(chalk.red(this.t('errors.search_failed')), error.message);
     }
@@ -558,19 +651,9 @@ class EventLocatorApp {
         return;
       }
 
-      console.log(chalk.green(this.t('events.your_events', { count: events.length })));
-      events.forEach(event => {
-        console.log(chalk.cyan(
-          this.t('events.details', {
-            title: event.title,
-            venue: event.venue,
-            city: event.city,
-            country: event.country,
-            time: event.startTime.toLocaleString(),
-            category: event.category.charAt(0).toUpperCase() + event.category.slice(1)
-          })
-        ));
-      });
+      this.displayEventsTable(events, this.t('events.your_events_title', { 
+        count: events.length 
+      }));
     } catch (error) {
       console.error(chalk.red(this.t('errors.view_events_failed')), error.message);
     }
@@ -663,10 +746,72 @@ class EventLocatorApp {
     setInterval(() => this.enhanceLocationData(), 60 * 60 * 1000);
   }
 
-  async close() {
-    await this.client.close();
-    await this.redisClient.quit();
+  async mainMenu() {
+    const menuChoices = {
+        register: this.t('menu.options.register'),
+        login: this.t('menu.options.login'),
+        create_event: this.t('menu.options.create_event'),
+        search_events: this.t('menu.options.search_events'),
+        view_events: this.t('menu.options.view_events'),
+        update_event: this.t('menu.options.update_event'),
+        delete_event: this.t('menu.options.delete_event'),
+        view_event_details: this.t('menu.options.view_event_details'),
+        exit: this.t('menu.options.exit')
+    };
+
+    while (true) {
+        try {
+            const { action } = await inquirer.prompt({
+                type: 'list',
+                name: 'action',
+                message: this.t('menu.main'),
+                choices: Object.values(menuChoices)
+            });
+
+            const selectedAction = Object.keys(menuChoices).find(
+                key => menuChoices[key] === action
+            );
+
+            switch (selectedAction) {
+                case 'register':
+                    await this.registerUser();
+                    break;
+                case 'login':
+                    await this.loginUser();
+                    break;
+                case 'create_event':
+                    await this.createEvent();
+                    break;
+                case 'search_events':
+                    await this.searchEvents();
+                    break;
+                case 'view_events':
+                    await this.viewMyEvents();
+                    break;
+                case 'update_event':
+                    await this.updateEvent();
+                    break;
+                case 'delete_event':
+                    await this.deleteEvent();
+                    break;
+                case 'view_event_details':
+                    await this.viewEventDetails();
+                    break;
+                case 'exit':
+                    await this.close();
+                    process.exit(0);
+            }
+        } catch (error) {
+            console.error(chalk.red('Menu operation failed:'), error);
+            // Continue to next iteration of the loop
+        }
+    }
+}
+async close() {
+  await this.client.close();
+  await this.redisClient.quit();
   }
 }
 
 module.exports = EventLocatorApp;
+
