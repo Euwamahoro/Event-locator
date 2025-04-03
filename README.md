@@ -1,7 +1,9 @@
 # Event Locator CLI
+![demo video](https://github.com/Euwamahoro/Event-locator.git) 
+![follow the project documentation:](https://docs.google.com/document/d/1HSgtptW4jJejT6d0w088pp0r_d7X7rnv0eETFJMNpYI/edit?usp=sharing)
+
 
 ![Event Locator CLI](https://via.placeholder.com/800x200?text=Event+Locator+CLI+Application)
-follow the project documentation: (https://docs.google.com/document/d/1HSgtptW4jJejT6d0w088pp0r_d7X7rnv0eETFJMNpYI/edit?usp=sharing)
 
 A command-line application for creating, managing, and finding events with multi-language support.
 
