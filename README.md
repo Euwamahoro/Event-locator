@@ -1,5 +1,5 @@
 # Event Locator CLI
-![demo video](https://github.com/Euwamahoro/Event-locator.git) 
+![demo video](https://go.screenpal.com/watch/cTfe31ni91i) 
 ![follow the project documentation:](https://docs.google.com/document/d/1HSgtptW4jJejT6d0w088pp0r_d7X7rnv0eETFJMNpYI/edit?usp=sharing)
 
 
